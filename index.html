@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueberry Maliyet Hesabı - Dr. Plant Muhammet Emin Aşcı</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="sites-layout">
+        <!-- Google Sites Header -->
+        <header class="sites-header">
+            <div class="sites-header-container">
+                <div class="sites-logo-area">
+                    <div class="sites-logo-wrapper">
+                        <h1 class="sites-logo">🍇 Blueberry Maliyet Hesabı<br><span style="font-size: 24px; font-weight: 500; letter-spacing: 0.5px;">Dr. Plant Muhammet Emin Aşcı</span></h1>
+                    </div>
+                </div>
+                <nav class="sites-header-nav">
+                    <a href="#ana-sayfa" class="sites-nav-link active">Ana Sayfa</a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="sites-content-wrapper">
+            <!-- Left Sidebar Navigation -->
+            <aside class="sites-sidebar">
+                <nav class="sites-sidebar-nav">
+                    <div class="sites-nav-section">
+                        <div class="sites-nav-title">Navigasyon</div>
+                        <a href="#ana-sayfa" class="sites-nav-item active">
+                            <span class="nav-item-text">Ana Sayfa</span>
+                        </a>
+                        <a href="#hesaplama" class="sites-nav-item">
+                            <span class="nav-item-text">Maliyet Hesaplama</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="sites-main-content">
+                <div class="sites-page-content">
+                    <!-- Content Section -->
+                    <div class="sites-content-section" id="girdi-bilgileri">
+                        <!-- Girdi Bilgileri Section -->
+                        <div class="sites-form-section">
+                            <h3 class="content-heading">📋 Girdi Bilgileri</h3>
+                            
+                            <!-- Temel Üretim Parametreleri -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">📐 Temel Üretim Parametreleri</h4>
+                                
+                                <div class="sites-form-container">
+                                    <div class="sites-form-group">
+                                        <label for="project-area" class="sites-form-label">📏 Proje Alanı (m²)</label>
+                                        <input type="number" id="project-area" class="sites-form-input" step="0.01" min="0" placeholder="Örn: 1000">
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="row-spacing" class="sites-form-label">↔️ Sıra Aralığı (cm)</label>
+                                        <input type="number" id="row-spacing" class="sites-form-input" step="0.01" min="0" placeholder="Örn: 300">
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="plant-spacing" class="sites-form-label">🌱 Bitki Aralığı (cm)</label>
+                                        <input type="number" id="plant-spacing" class="sites-form-input" step="0.01" min="0" placeholder="Örn: 100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bölge ve İklim Parametreleri -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">🌍 Bölge ve İklim Parametreleri</h4>
+                                
+                                <div class="sites-form-container">
+                                    <div class="sites-form-group">
+                                        <label for="country" class="sites-form-label">🌍 Ülke Seçimi</label>
+                                        <select id="country" class="sites-form-input">
+                                            <option value="">Seçiniz...</option>
+                                            <option value="usa">Amerika Birleşik Devletleri</option>
+                                            <option value="turkiye">Türkiye</option>
+                                            <option value="kanada">Kanada</option>
+                                            <option value="sili">Şili</option>
+                                            <option value="peru">Peru</option>
+                                            <option value="meksika">Meksika</option>
+                                            <option value="diger">Diğer</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="city" class="sites-form-label">🏙️ Şehir/Bölge Seçimi</label>
+                                        <select id="city" class="sites-form-input">
+                                            <option value="">Önce ülke seçiniz...</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="avg-temperature" class="sites-form-label">🌡️ Ortalama Sıcaklık (°C)</label>
+                                        <input type="number" id="avg-temperature" class="sites-form-input" step="0.1" placeholder="Örn: 15.5">
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="annual-rainfall" class="sites-form-label">🌧️ Yıllık Yağış Miktarı (mm)</label>
+                                        <input type="number" id="annual-rainfall" class="sites-form-input" step="0.01" min="0" placeholder="Örn: 800">
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="humidity" class="sites-form-label">💨 Nem Oranı (%)</label>
+                                        <input type="number" id="humidity" class="sites-form-input" step="0.1" min="0" max="100" placeholder="Örn: 65">
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="harvest-period" class="sites-form-label">📅 Hasat Dönemi</label>
+                                        <input type="text" id="harvest-period" class="sites-form-input" placeholder="Örn: Haziran-Temmuz">
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="harvest-duration" class="sites-form-label">⏱️ Hasat Süresi (gün)</label>
+                                        <input type="number" id="harvest-duration" class="sites-form-input" step="1" min="0" placeholder="Örn: 45">
+                                    </div>
+
+                                    <div class="sites-form-group" id="source-info" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e8eaed;">
+                                        <label class="sites-form-label" style="font-weight: 600; color: #1a73e8;">🔗 Kaynak Bilgileri</label>
+                                        <div id="source-content" style="font-size: 12px; color: #5f6368; line-height: 1.6; margin-top: 8px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fidan Kültürleri -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">🍇 Fidan Kültürleri</h4>
+                                
+                                <div class="sites-form-container">
+                                    <div class="sites-form-group">
+                                        <label for="blueberry-type" class="sites-form-label">🍇 Blueberry Türü</label>
+                                        <select id="blueberry-type" class="sites-form-input">
+                                            <option value="">Seçiniz...</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="blueberry-variety" class="sites-form-label">🫐 Blueberry Çeşidi</label>
+                                        <select id="blueberry-variety" class="sites-form-input">
+                                            <option value="">Önce tür seçiniz...</option>
+                                        </select>
+                                        <div id="recommended-variety" style="display: none; margin-top: 8px; padding: 8px; background-color: #e8f0fe; border-radius: 4px; font-size: 12px; color: #1a73e8;">
+                                            <strong>💡 Önerilen Çeşit:</strong> <span id="recommended-text"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Çeşit Parametreleri Tablosu -->
+                                <div id="variety-params" style="display: none; margin-top: 24px;">
+                                    <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 16px;">Çeşit Parametreleri</h5>
+                                    
+                                    <div class="variety-params-table">
+                                        <table class="params-table">
+                                            <tr>
+                                                <td class="param-label">Günlük Su İhtiyacı (Bitki Başı)</td>
+                                                <td class="param-value" id="param-water">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="param-label">İdeal Toprak pH</td>
+                                                <td class="param-value" id="param-ph">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="param-label">Güneş Işığı İhtiyacı</td>
+                                                <td class="param-value" id="param-sunlight">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="param-label">Soğuklama İhtiyacı (7°C altında saat)</td>
+                                                <td class="param-value" id="param-chill">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="param-label">Uygun Sıcaklık Aralığı</td>
+                                                <td class="param-value" id="param-temperature">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="param-label">Tahmini Hasat Dönemi</td>
+                                                <td class="param-value" id="param-harvest">-</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <div class="variety-info-section" style="margin-top: 20px;">
+                                        <div class="info-box">
+                                            <h6 style="font-size: 14px; font-weight: 500; color: #202124; margin-bottom: 8px;">📋 Çeşit Hakkında</h6>
+                                            <p id="variety-description" style="font-size: 13px; color: #5f6368; line-height: 1.6; margin: 0;"></p>
+                                        </div>
+
+                                        <div class="warning-box" style="margin-top: 16px;">
+                                            <h6 style="font-size: 14px; font-weight: 500; color: #ea4335; margin-bottom: 8px;">⚠️ Dikkat Edilmesi Gerekenler</h6>
+                                            <p id="variety-warning" style="font-size: 13px; color: #5f6368; line-height: 1.6; margin: 0;"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sulama Sistemi -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">💧 Sulama Sistemi</h4>
+                                
+                                <div class="sites-form-container">
+                                    <div class="sites-form-group">
+                                        <label for="irrigation-type" class="sites-form-label">💧 Sulama Tipi</label>
+                                        <select id="irrigation-type" class="sites-form-input">
+                                            <option value="">Seçiniz...</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Sulama Sistemi Ekipmanları -->
+                                <div id="irrigation-equipment" style="display: none; margin-top: 24px;">
+                                    <!-- Yıllık Su İhtiyacı -->
+                                    <div id="annual-water-need" style="background-color: #e8f0fe; padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #1a73e8;">
+                                        <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 12px; display: flex; align-items: center;">
+                                            💧 Projenin Tahmini Yıllık Su İhtiyacı
+                                        </h5>
+                                        <div id="water-calculation" style="font-size: 14px; color: #5f6368; line-height: 1.8;">
+                                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px;">
+                                                <div>
+                                                    <strong style="color: #202124;">Günlük Su İhtiyacı:</strong><br>
+                                                    <span id="daily-water" style="color: #1a73e8; font-weight: 600;">-</span>
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #202124;">Aylık Su İhtiyacı:</strong><br>
+                                                    <span id="monthly-water" style="color: #1a73e8; font-weight: 600;">-</span>
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #202124;">Yıllık Su İhtiyacı:</strong><br>
+                                                    <span id="annual-water" style="color: #1a73e8; font-weight: 600; font-size: 16px;">-</span>
+                                                </div>
+                                            </div>
+                                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #dadce0; font-size: 12px; color: #5f6368;">
+                                                <strong>Not:</strong> Hesaplama, seçilen çeşidin günlük su ihtiyacı ve toplam bitki sayısına göre yapılmıştır. Gerçek ihtiyaç iklim koşullarına göre değişebilir.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 16px;">Gerekli Ekipmanlar</h5>
+                                    
+                                    <div class="equipment-list" id="equipment-list">
+                                        <!-- Ekipmanlar buraya dinamik olarak eklenecek -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Örtü Tercihi -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">🛡️ Örtü Tercihi</h4>
+                                
+                                <div class="sites-form-container">
+                                    <div class="sites-form-group">
+                                        <label for="cover-preference" class="sites-form-label">🛡️ Örtü Kullanımı</label>
+                                        <select id="cover-preference" class="sites-form-input">
+                                            <option value="">Seçiniz...</option>
+                                            <option value="yes">Evet, Örtü Kullanmak İstiyorum</option>
+                                            <option value="no">Hayır, Örtü Kullanmayacağım</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Örtü Etkisi Tablosu -->
+                                <div id="cover-impact" style="display: none; margin-top: 24px;">
+                                    <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 16px;">Örtü Kullanımının Verime Etkisi</h5>
+                                    
+                                    <div class="cover-impact-table" style="background: linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%); border: 1px solid #c8e6c9; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(46, 125, 50, 0.1);">
+                                        <table class="params-table" style="width: 100%;">
+                                            <thead>
+                                                <tr style="background-color: #f8f9fa;">
+                                                    <th style="padding: 12px 16px; text-align: left; font-weight: 500; color: #202124; border-bottom: 2px solid #dadce0;">Parametre</th>
+                                                    <th style="padding: 12px 16px; text-align: center; font-weight: 500; color: #202124; border-bottom: 2px solid #dadce0;">Örtü Kullanılmadan</th>
+                                                    <th style="padding: 12px 16px; text-align: center; font-weight: 500; color: #202124; border-bottom: 2px solid #dadce0;">Örtü Kullanılarak</th>
+                                                    <th style="padding: 12px 16px; text-align: center; font-weight: 500; color: #202124; border-bottom: 2px solid #dadce0;">Etki</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="param-label" style="font-weight: 500;">Verim (kg/dekar)</td>
+                                                    <td class="param-value" id="yield-without-cover" style="text-align: center;">-</td>
+                                                    <td class="param-value" id="yield-with-cover" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                    <td class="param-value" id="yield-impact" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="param-label" style="font-weight: 500;">Hasat Dönemi</td>
+                                                    <td class="param-value" id="harvest-without-cover" style="text-align: center;">-</td>
+                                                    <td class="param-value" id="harvest-with-cover" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                    <td class="param-value" id="harvest-impact" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="param-label" style="font-weight: 500;">Meyve Kalitesi</td>
+                                                    <td class="param-value" id="quality-without-cover" style="text-align: center;">-</td>
+                                                    <td class="param-value" id="quality-with-cover" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                    <td class="param-value" id="quality-impact" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="param-label" style="font-weight: 500;">Su Tüketimi</td>
+                                                    <td class="param-value" id="water-without-cover" style="text-align: center;">-</td>
+                                                    <td class="param-value" id="water-with-cover" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                    <td class="param-value" id="water-impact" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="param-label" style="font-weight: 500;">Hastalık Riski</td>
+                                                    <td class="param-value" id="disease-without-cover" style="text-align: center;">-</td>
+                                                    <td class="param-value" id="disease-with-cover" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                    <td class="param-value" id="disease-impact" style="text-align: center; color: #137333; font-weight: 600;">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="cover-info-section" style="margin-top: 20px;">
+                                        <div class="info-box">
+                                            <h6 style="font-size: 14px; font-weight: 500; color: #202124; margin-bottom: 8px;">📋 Örtü Kullanımının Avantajları</h6>
+                                            <ul id="cover-advantages" style="font-size: 13px; color: #5f6368; line-height: 1.6; margin: 0; padding-left: 20px;">
+                                                <!-- Dinamik olarak eklenecek -->
+                                            </ul>
+                                        </div>
+
+                                        <div class="warning-box" style="margin-top: 16px;">
+                                            <h6 style="font-size: 14px; font-weight: 500; color: #ea4335; margin-bottom: 8px;">⚠️ Dikkat Edilmesi Gerekenler</h6>
+                                            <ul id="cover-warnings" style="font-size: 13px; color: #5f6368; line-height: 1.6; margin: 0; padding-left: 20px;">
+                                                <!-- Dinamik olarak eklenecek -->
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Örtü Maliyeti Hesaplama -->
+                                    <div id="cover-cost-section" style="display: none; margin-top: 24px;">
+                                        <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 16px;">Örtü Sistemi Maliyeti</h5>
+                                        
+                                        <div class="cover-cost-breakdown" style="background-color: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+                                            <h6 style="font-size: 14px; font-weight: 500; color: #202124; margin-bottom: 12px;">Kullanılacak Bileşenler ve Fiyatları</h6>
+                                            
+                                            <div id="cover-components-list" style="margin-bottom: 16px;">
+                                                <!-- Bileşenler buraya dinamik olarak eklenecek -->
+                                            </div>
+                                            
+                                            <div style="border-top: 2px solid #1a73e8; padding-top: 12px; margin-top: 16px;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                                    <span style="font-size: 16px; font-weight: 600; color: #202124;">Toplam Örtü Sistemi Maliyeti:</span>
+                                                    <span id="total-cover-cost" style="font-size: 20px; font-weight: 700; color: #1a73e8;">0 ₺</span>
+                                                </div>
+                                                
+                                                <!-- Maliyet Artışı Karşılaştırması -->
+                                                <div id="cost-increase-info" style="background-color: #e8f0fe; padding: 12px; border-radius: 4px; margin-top: 12px; border-left: 3px solid #1a73e8;">
+                                                    <div style="font-size: 13px; color: #202124; margin-bottom: 8px;">
+                                                        <strong>📊 Maliyet Artışı Analizi:</strong>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 12px;">
+                                                        <div>
+                                                            <span style="color: #5f6368;">Örtü Kullanılmadan Toplam:</span><br>
+                                                            <span id="cost-without-cover" style="color: #202124; font-weight: 600; font-size: 14px;">-</span>
+                                                        </div>
+                                                        <div>
+                                                            <span style="color: #5f6368;">Örtü Kullanılarak Toplam:</span><br>
+                                                            <span id="cost-with-cover" style="color: #1a73e8; font-weight: 600; font-size: 14px;">-</span>
+                                                        </div>
+                                                        <div>
+                                                            <span style="color: #5f6368;">Maliyet Artışı (TL):</span><br>
+                                                            <span id="cost-increase-tl" style="color: #ea4335; font-weight: 600; font-size: 14px;">-</span>
+                                                        </div>
+                                                        <div>
+                                                            <span style="color: #5f6368;">Maliyet Artışı (%):</span><br>
+                                                            <span id="cost-increase-percent" style="color: #ea4335; font-weight: 600; font-size: 14px;">-</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="font-size: 12px; color: #5f6368; margin-top: 12px;">
+                                                    <strong>Not:</strong> Fiyatlar 2024 yılı ortalama piyasa fiyatlarıdır. Gerçek maliyetler bölge ve tedarikçiye göre değişebilir.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Saksı ve Substrat Bilgileri -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">🪴 Saksı ve Substrat Bilgileri</h4>
+                                
+                                <div class="sites-form-container">
+                                    <div class="sites-form-group">
+                                        <label for="pot-size" class="sites-form-label">🪴 Saksı Boyutu</label>
+                                        <select id="pot-size" class="sites-form-input">
+                                            <option value="">Seçiniz...</option>
+                                            <option value="20">20 Litre Serinova</option>
+                                            <option value="25">25 Litre Serinova</option>
+                                            <option value="30">30 Litre Serinova</option>
+                                            <option value="40">40 Litre Serinova</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sites-form-group">
+                                        <label for="substrate-type" class="sites-form-label">🌿 Substrat Karışımı</label>
+                                        <select id="substrate-type" class="sites-form-input">
+                                            <option value="">Seçiniz...</option>
+                                            <option value="100-torf">%100 Beyaz Torf</option>
+                                            <option value="50-50">%50 Beyaz Torf + %50 Kokopit</option>
+                                            <option value="65-25-10">%65 Beyaz Torf + %25 Kokopit + %10 Perlit</option>
+                                            <option value="50-40-10">%50 Beyaz Torf + %40 Kokopit + %10 Perlit</option>
+                                            <option value="50-40-10-pomza">%50 Beyaz Torf + %40 Kokopit + %10 Pomza</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Substrat Bileşenleri İhtiyacı -->
+                                <div id="substrate-components-need" style="display: none; margin-top: 20px; padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #1a73e8;">
+                                    <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 12px;">Substrat Bileşenleri İhtiyacı (m³)</h5>
+                                    <div id="substrate-components-list" style="font-size: 14px; color: #5f6368;">
+                                        <!-- Bileşenler buraya eklenecek -->
+                                    </div>
+                                </div>
+
+                                <!-- Toplam Saksı ve Fidan Adedi Bilgisi -->
+                                <div id="total-pot-seedling-info" style="display: none; margin-top: 20px; padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #1a73e8;">
+                                    <h5 style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 12px;">Toplam Saksı ve Fidan Adedi</h5>
+                                    <div style="font-size: 14px; color: #5f6368;">
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #202124;">Toplam Fidan Adedi:</strong> 
+                                            <span id="total-seedling-count" style="color: #1a73e8; font-weight: 600;">-</span>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #202124;">Toplam Saksı Adedi:</strong> 
+                                            <span id="total-pot-count" style="color: #1a73e8; font-weight: 600;">-</span>
+                                        </div>
+                                        <div id="cocopeat-info" style="display: none;">
+                                            <strong style="color: #202124;">Toplam Cocopeat İhtiyacı:</strong> 
+                                            <span id="total-cocopeat-need" style="color: #1a73e8; font-weight: 600;">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Tahmini Yıllık Hasat Miktarları -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">📊 Tahmini Yıllık Hasat Miktarları</h4>
+                                
+                                <div id="harvest-estimates" style="display: none; margin-top: 20px;">
+                                    <div class="harvest-container">
+                                        <h5 class="harvest-title">Yıllık Hasat Tahminleri (kg)</h5>
+                                        
+                                        <div id="harvest-table" class="harvest-table-wrapper">
+                                            <table class="harvest-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Yıl</th>
+                                                        <th>Bitki Başına Verim (kg)</th>
+                                                        <th>Toplam Hasat (kg)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="harvest-table-body">
+                                                    <!-- Yıllık hasat verileri buraya eklenecek -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="harvest-note">
+                                            <div>
+                                                <strong>Not:</strong> Hasat miktarları saksıda yetiştiricilik için tahmini değerlerdir. Gerçek verimler çeşit, iklim koşulları, bakım kalitesi ve diğer faktörlere göre değişebilir.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Genel Kaynak Bilgileri -->
+                            <div class="form-subsection">
+                                <h4 class="content-subheading">📚 Girdi Bilgileri Kaynakları</h4>
+                                <div class="sites-form-group" id="general-source-info">
+                                    <div id="general-source-content" style="font-size: 12px; color: #5f6368; line-height: 1.6;">
+                                        <p style="margin-bottom: 12px;">Bu formdaki girdi bilgileri aşağıdaki akademik makaleler ve araştırmalardan alınmıştır:</p>
+                                        <ul style="margin: 8px 0; padding-left: 20px;">
+                                            <li><a href="https://atlasbig.com.tr/ulkelerin-yabanmersini-uretimi" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">AtlasBig - Dünya Yaban Mersini Üretim İstatistikleri</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://www.aa.com.tr/tr/ekonomi/turkiye-yaban-mersini-uretiminde-alova-farm-ile-dunya-pazarina-acilacak/3083319" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">Anadolu Ajansı - Türkiye Yaban Mersini Üretimi</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://www.aa.com.tr/tr/insana-dair/tek-cati-altinda-toplanan-bursali-yaban-mersini-ureticileri-ihracat-hedefliyor/3619443" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">Anadolu Ajansı - Bursa Yaban Mersini Üreticileri</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://www.ertv.com.tr/turkiye-nin-yeni-ihracat-yildizi-yaban-mersini-uretim-artti-4-2-milyon-dolar-katki-sagladi/23563/" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">ERTV - Türkiye Yaban Mersini Üretim Raporu</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://extension.oregonstate.edu/crop-production/berries/blueberry-production" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">Oregon State University - Blueberry Production Guide</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://www.canr.msu.edu/blueberries/" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">Michigan State University - Blueberry Research</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://www.ars.usda.gov/news-events/news/research-news/2024/blueberry-research/" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">USDA - Blueberry Research</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://www.mgm.gov.tr/arastirma/tarim-meteorolojisi.aspx" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">Meteoroloji Genel Müdürlüğü - Tarım Meteorolojisi</a> <span style="color: #5f6368;">↗</span></li>
+                                            <li><a href="https://data.tuik.gov.tr/Bulten/Index?p=Bitkisel-Uretim-Istatistikleri-2023-49674" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">TÜİK - Bitkisel Üretim İstatistikleri</a> <span style="color: #5f6368;">↗</span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results Section -->
+                        <div class="sites-results-section" id="results" style="display: none;">
+                            <div class="sites-results-grid">
+                                <div class="sites-result-card">
+                                    <div class="result-card-label">Toplam Yatırım</div>
+                                    <div class="result-card-value" id="total-investment">0 ₺</div>
+                                </div>
+
+                                <div class="sites-result-card">
+                                    <div class="result-card-label">Toplam Gelir</div>
+                                    <div class="result-card-value" id="total-revenue">0 ₺</div>
+                                </div>
+
+                                <div class="sites-result-card">
+                                    <div class="result-card-label">Net Kar</div>
+                                    <div class="result-card-value" id="net-profit">0 ₺</div>
+                                </div>
+
+                                <div class="sites-result-card">
+                                    <div class="result-card-label">Kar Marjı</div>
+                                    <div class="result-card-value" id="profit-margin">0%</div>
+                                </div>
+
+                                <div class="sites-result-card">
+                                    <div class="result-card-label">Birim Maliyet</div>
+                                    <div class="result-card-value" id="unit-cost">0 ₺/kg</div>
+                                </div>
+
+                                <div class="sites-result-card">
+                                    <div class="result-card-label">Yıllık Ortalama Kar</div>
+                                    <div class="result-card-value" id="annual-profit">0 ₺</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="sites-footer">
+            <div class="sites-footer-content">
+                <p class="footer-author">Dr. Plant Muhammet Emin Aşcı</p>
+                <p class="footer-copyright">&copy; 2024 Blueberry Maliyet Hesabı</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
