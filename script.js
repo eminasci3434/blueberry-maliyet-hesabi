@@ -438,11 +438,234 @@ const blueberryRegions = {
     }
 };
 
+// Form verilerini kaydetmeyi engellemek için flag
+let isLoadingFormData = false;
+
+// Form verilerini localStorage'a kaydet
+function saveFormData() {
+    // Eğer form verileri yükleniyorsa kaydetme
+    if (isLoadingFormData) return;
+    
+    const formData = {};
+    const inputIds = [
+        'project-area', 'row-spacing', 'plant-spacing',
+        'country', 'city', 'avg-temperature', 'annual-rainfall', 'humidity', 
+        'harvest-period', 'harvest-duration',
+        'blueberry-type', 'blueberry-variety',
+        'irrigation-type', 'cover-preference',
+        'pot-size', 'substrate-type',
+        'worker-daily-harvest', 'worker-count', 'inflation-rate'
+    ];
+    
+    inputIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.tagName === 'SELECT') {
+                formData[id] = element.value;
+            } else {
+                formData[id] = element.value;
+            }
+        }
+    });
+    
+    try {
+        localStorage.setItem('blueberryFormData', JSON.stringify(formData));
+    } catch (error) {
+        console.error('Form verileri kaydedilemedi:', error);
+    }
+}
+
+// Form verilerini localStorage'dan yükle
+function loadFormData() {
+    try {
+        isLoadingFormData = true; // Form yüklenirken kaydetmeyi engelle
+        
+        const savedData = localStorage.getItem('blueberryFormData');
+        if (!savedData) {
+            isLoadingFormData = false;
+            return;
+        }
+        
+        const formData = JSON.parse(savedData);
+        
+        // Önce ülke seçimini yükle (şehir listesi için gerekli)
+        if (formData.country) {
+            const countrySelect = document.getElementById('country');
+            if (countrySelect) {
+                countrySelect.value = formData.country;
+                // Şehir listesini güncelle (event tetiklemeden)
+                const citySelect = document.getElementById('city');
+                if (citySelect && formData.country !== 'diger' && blueberryRegions[formData.country]) {
+                    citySelect.innerHTML = '<option value="">Seçiniz...</option>';
+                    const cities = blueberryRegions[formData.country].cities;
+                    for (const [key, city] of Object.entries(cities)) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = city.name;
+                        citySelect.appendChild(option);
+                    }
+                }
+            }
+        }
+        
+        // Blueberry type seçimini yükle (variety listesi için gerekli)
+        if (formData['blueberry-type']) {
+            const typeSelect = document.getElementById('blueberry-type');
+            if (typeSelect) {
+                // Önce türleri doldur (eğer henüz doldurulmamışsa)
+                if (typeSelect.options.length <= 1) {
+                    for (const [key, type] of Object.entries(blueberryTypes)) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = type.name;
+                        typeSelect.appendChild(option);
+                    }
+                }
+                typeSelect.value = formData['blueberry-type'];
+                
+                // Variety listesini güncelle (event tetiklemeden)
+                const varietySelect = document.getElementById('blueberry-variety');
+                if (varietySelect && blueberryTypes[formData['blueberry-type']]) {
+                    varietySelect.innerHTML = '<option value="">Seçiniz...</option>';
+                    const varieties = blueberryTypes[formData['blueberry-type']].varieties;
+                    for (const [key, variety] of Object.entries(varieties)) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = variety.name;
+                        varietySelect.appendChild(option);
+                    }
+                }
+            }
+        }
+        
+        // Diğer tüm alanları yükle (event tetiklemeden)
+        Object.keys(formData).forEach(id => {
+            const element = document.getElementById(id);
+            if (element && formData[id] !== null && formData[id] !== '') {
+                // Sadece değer atama, event tetikleme
+                if (element.value !== formData[id]) {
+                    element.value = formData[id];
+                }
+            }
+        });
+        
+        // Sadece gerekli select elementlerinin change event'lerini tetikle (dinamik içerikler için)
+        // Ama iklim verilerini otomatik doldurmayı engellemek için dikkatli ol
+        setTimeout(() => {
+            // Şehir seçiliyse, kaynak bilgilerini göstermek için change event'ini tetikle
+            // Ama iklim verilerini doldurmayı engelle (zaten yüklendi)
+            if (formData.country && formData.city) {
+                const citySelect = document.getElementById('city');
+                if (citySelect && citySelect.value === formData.city) {
+                    const countryCode = formData.country;
+                    const cityCode = formData.city;
+                    if (blueberryRegions[countryCode] && blueberryRegions[countryCode].cities[cityCode]) {
+                        const cityData = blueberryRegions[countryCode].cities[cityCode];
+                        // Sadece kaynak bilgilerini göster, iklim verilerini doldurma
+                        showSourceInfo(cityData.sources, blueberryRegions[countryCode].name, cityData.name);
+                    }
+                }
+            }
+            
+            // Blueberry type ve variety için change event'ini tetikle
+            if (formData['blueberry-type']) {
+                const typeSelect = document.getElementById('blueberry-type');
+                if (typeSelect && typeSelect.value === formData['blueberry-type']) {
+                    // Variety seçiliyse, variety change event'ini de tetikle
+                    if (formData['blueberry-variety']) {
+                        const varietySelect = document.getElementById('blueberry-variety');
+                        if (varietySelect && varietySelect.value === formData['blueberry-variety']) {
+                            const typeCode = formData['blueberry-type'];
+                            const varietyCode = formData['blueberry-variety'];
+                            if (blueberryTypes[typeCode] && blueberryTypes[typeCode].varieties[varietyCode]) {
+                                const variety = blueberryTypes[typeCode].varieties[varietyCode];
+                                // Çeşit parametrelerini göster
+                                showVarietyParams(variety);
+                                // Su ihtiyacını güncelle
+                                const params = calculateProjectParams();
+                                if (params) {
+                                    calculateAnnualWaterNeed(params);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sulama sistemi için change event'ini tetikle
+            if (formData['irrigation-type']) {
+                const irrigationSelect = document.getElementById('irrigation-type');
+                if (irrigationSelect && irrigationSelect.value === formData['irrigation-type']) {
+                    const systemCode = formData['irrigation-type'];
+                    if (irrigationSystems[systemCode]) {
+                        const system = irrigationSystems[systemCode];
+                        system.code = systemCode;
+                        showIrrigationEquipment(system);
+                    }
+                }
+            }
+            
+            // Örtü tercihi için change event'ini tetikle
+            if (formData['cover-preference']) {
+                const coverSelect = document.getElementById('cover-preference');
+                if (coverSelect && coverSelect.value === formData['cover-preference']) {
+                    const useCover = coverSelect.value === 'yes';
+                    showCoverImpact(useCover);
+                    if (useCover) {
+                        const params = calculateProjectParams();
+                        if (params) {
+                            calculateCoverCost(params);
+                        }
+                    }
+                }
+            }
+            
+            isLoadingFormData = false; // Form yükleme tamamlandı
+        }, 300);
+        
+        console.log('Form verileri yüklendi');
+    } catch (error) {
+        console.error('Form verileri yüklenemedi:', error);
+        isLoadingFormData = false;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const calculateBtn = document.getElementById('calculate-btn');
     const resultsSection = document.getElementById('results');
     const countrySelect = document.getElementById('country');
     const citySelect = document.getElementById('city');
+    
+    // Form verilerini yükle
+    loadFormData();
+    
+    // Tüm input ve select elementlerine change/input event listener ekle
+    const inputIds = [
+        'project-area', 'row-spacing', 'plant-spacing',
+        'country', 'city', 'avg-temperature', 'annual-rainfall', 'humidity', 
+        'harvest-period', 'harvest-duration',
+        'blueberry-type', 'blueberry-variety',
+        'irrigation-type', 'cover-preference',
+        'pot-size', 'substrate-type',
+        'worker-daily-harvest', 'worker-count', 'inflation-rate'
+    ];
+    
+    inputIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', saveFormData);
+            element.addEventListener('input', saveFormData);
+        }
+    });
+    
+    // Calculate button event listener (eğer buton varsa)
+    if (calculateBtn) {
+        calculateBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Form submit'i engelle
+            e.stopPropagation(); // Event bubbling'i durdur
+            calculateCosts();
+        });
+    }
     
     // Sayfa yüklendiğinde Girdi Bilgileri bölümüne odaklan
     const girdiBilgileriSection = document.getElementById('girdi-bilgileri');
@@ -469,8 +692,10 @@ document.addEventListener('DOMContentLoaded', function() {
             citySelect.innerHTML = '<option value="">Manuel giriş yapın</option>';
         }
         
-        // Şehir seçimini sıfırla
-        clearClimateData();
+        // Şehir seçimini sıfırla (form yüklenirken değil)
+        if (!isLoadingFormData) {
+            clearClimateData();
+        }
     });
     
     // Şehir seçildiğinde iklim verilerini doldur
@@ -481,11 +706,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (countryCode && cityCode && countryCode !== 'diger' && blueberryRegions[countryCode]) {
             const cityData = blueberryRegions[countryCode].cities[cityCode];
             if (cityData) {
-                fillClimateData(cityData);
+                // Form yüklenirken sadece boş alanları doldur, kullanıcı değerlerini koru
+                fillClimateData(cityData, isLoadingFormData);
                 showSourceInfo(cityData.sources, blueberryRegions[countryCode].name, cityData.name);
             }
         } else {
-            clearClimateData();
+            // Form yüklenirken temizleme yapma
+            if (!isLoadingFormData) {
+                clearClimateData();
+            }
         }
     });
     
@@ -618,9 +847,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (params && params.totalPlants > 0) {
             updatePotSeedlingCount(params);
             updateSubstrateComponents(params);
+            updateFertilizerNeed(); // Gübreleme ihtiyacını da güncelle
         } else {
             document.getElementById('total-pot-seedling-info').style.display = 'none';
             document.getElementById('substrate-components-need').style.display = 'none';
+            document.getElementById('fertilizer-need').style.display = 'none';
         }
     }
     
@@ -734,19 +965,52 @@ document.addEventListener('DOMContentLoaded', function() {
         substrateSelect.addEventListener('change', updatePotSubstrateInfo);
     }
     
-    // Proje parametreleri değiştiğinde hasat tahminlerini güncelle
+    // Proje parametreleri değiştiğinde hasat tahminlerini ve gübreleme ihtiyacını güncelle
     const projectInputsForHarvest = ['project-area', 'row-spacing', 'plant-spacing'];
     projectInputsForHarvest.forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
             input.addEventListener('input', function() {
                 updateHarvestEstimates();
+                updateFertilizerNeed(); // Gübreleme ihtiyacını da güncelle
             });
         }
     });
     
-    calculateBtn.addEventListener('click', function() {
+    calculateBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // Form submit'i engelle
+        e.stopPropagation(); // Event bubbling'i durdur
         calculateCosts();
+    });
+    
+    // Sayfa yüklendiğinde gübreleme ihtiyacını kontrol et
+    updateFertilizerNeed();
+    
+    // Sayfa yüklendiğinde önerilen personel sayısını kontrol et
+    updateRecommendedStaff();
+    
+    // İşçi ve hasat parametreleri için event listener'lar
+    const workerDailyHarvestInput = document.getElementById('worker-daily-harvest');
+    const workerCountInput = document.getElementById('worker-count');
+    
+    if (workerDailyHarvestInput) {
+        workerDailyHarvestInput.addEventListener('input', updateWorkerHarvestCalculations);
+    }
+    
+    if (workerCountInput) {
+        workerCountInput.addEventListener('input', updateWorkerHarvestCalculations);
+    }
+    
+    // Proje parametreleri değiştiğinde işçi hesaplamalarını güncelle
+    const projectInputsForWorkers = ['project-area', 'row-spacing', 'plant-spacing'];
+    projectInputsForWorkers.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('input', function() {
+                updateRecommendedStaff();
+                updateWorkerHarvestCalculations();
+            });
+        }
     });
 
     // Enter tuşu ile de hesaplama yapılabilir
@@ -781,48 +1045,765 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function calculateCosts() {
-    // Form değerlerini al
-    const area = parseFloat(document.getElementById('area').value) || 0;
-    const plantingCost = parseFloat(document.getElementById('planting-cost').value) || 0;
-    const annualCost = parseFloat(document.getElementById('annual-cost').value) || 0;
-    const yield = parseFloat(document.getElementById('yield').value) || 0;
-    const price = parseFloat(document.getElementById('price').value) || 0;
-    const years = parseInt(document.getElementById('years').value) || 1;
-
-    // Validasyon
-    if (area <= 0 || years <= 0) {
-        alert('Lütfen geçerli bir alan ve yıl sayısı girin!');
-        return;
+    try {
+        console.log('Hesaplama başlatılıyor...');
+        
+        // Proje parametrelerini al
+        const params = calculateProjectParams();
+        console.log('Proje parametreleri:', params);
+        
+        if (!params || params.totalPlants <= 0) {
+            alert('Lütfen proje parametrelerini (Alan, Sıra Aralığı, Bitki Aralığı) girin!');
+            return;
+        }
+        
+        // Tüm girdileri topla ve hesapla
+        console.log('Girdiler toplanıyor...');
+        const analysisData = collectAllInputsAndCalculate();
+        console.log('Analiz verisi hazırlandı:', analysisData);
+        
+        // Verileri localStorage'a kaydet
+        try {
+            // JSON.stringify için replacer fonksiyonu - sorunlu değerleri temizle
+            const replacer = (key, value) => {
+                // NaN, Infinity, -Infinity değerlerini null'a çevir
+                if (typeof value === 'number') {
+                    if (isNaN(value) || !isFinite(value)) {
+                        return 0;
+                    }
+                }
+                // undefined değerlerini null'a çevir
+                if (value === undefined) {
+                    return null;
+                }
+                // Fonksiyonları atla
+                if (typeof value === 'function') {
+                    return undefined;
+                }
+                return value;
+            };
+            
+            const dataString = JSON.stringify(analysisData, replacer);
+            console.log('Veri JSON\'a dönüştürüldü, uzunluk:', dataString.length);
+            
+            // JSON'un geçerli olup olmadığını kontrol et
+            try {
+                JSON.parse(dataString);
+            } catch (parseError) {
+                throw new Error('JSON geçersiz: ' + parseError.message);
+            }
+            
+            localStorage.setItem('blueberryAnalysisData', dataString);
+            console.log('Veri localStorage\'a kaydedildi');
+            
+            // Kaydedilen veriyi kontrol et
+            const savedData = localStorage.getItem('blueberryAnalysisData');
+            if (!savedData) {
+                throw new Error('Veri kaydedilemedi - localStorage boş');
+            }
+            console.log('Kaydedilen veri doğrulandı');
+            
+            // Yeni sayfaya yönlendir
+            console.log('results.html sayfasına yönlendiriliyor...');
+            window.location.href = 'results.html';
+        } catch (error) {
+            console.error('Veri kaydedilemedi:', error);
+            console.error('Hata detayları:', {
+                message: error.message,
+                stack: error.stack,
+                analysisData: analysisData
+            });
+            alert('Veriler kaydedilemedi: ' + error.message + '\nLütfen tarayıcı konsolunu kontrol edin (F12).');
+        }
+    } catch (error) {
+        console.error('Hesaplama hatası:', error);
+        alert('Hesaplama sırasında bir hata oluştu: ' + error.message + '\nLütfen tarayıcı konsolunu kontrol edin (F12).');
     }
+}
 
-    // Hesaplamalar
-    const totalPlantingCost = plantingCost * area;
-    const totalAnnualCost = annualCost * area * years;
-    const totalInvestment = totalPlantingCost + totalAnnualCost;
+// Tüm girdileri topla ve hesapla
+function collectAllInputsAndCalculate() {
+    try {
+        console.log('Girdiler toplanıyor...');
+        const params = calculateProjectParams();
+        console.log('Proje parametreleri alındı:', params);
+        
+        // Saksı ve substrat bilgileri
+        const potSize = document.getElementById('pot-size')?.value || null;
+        const substrateType = document.getElementById('substrate-type')?.value || null;
+        console.log('Saksı ve substrat:', { potSize, substrateType });
+        
+        // Sulama sistemi
+        const irrigationType = document.getElementById('irrigation-type')?.value || null;
+        console.log('Sulama tipi:', irrigationType);
+        
+        // Örtü tercihi
+        const coverPreference = document.getElementById('cover-preference')?.value || 'no';
+        const useCover = coverPreference === 'yes';
+        console.log('Örtü tercihi:', { coverPreference, useCover });
+        
+        // İşçi parametreleri
+        const workerDailyHarvest = parseFloat(document.getElementById('worker-daily-harvest')?.value) || 0;
+        const workerCount = parseInt(document.getElementById('worker-count')?.value) || 0;
+        console.log('İşçi parametreleri:', { workerDailyHarvest, workerCount });
+        
+        // Hasat süresi
+        const harvestDuration = parseFloat(document.getElementById('harvest-duration')?.value) || 45;
+        console.log('Hasat süresi:', harvestDuration);
+        
+        // Girdi bölümünde hesaplanan toplam maliyetleri al
+        let coverTotalCost = 0;
+        if (useCover && params) {
+            coverTotalCost = calculateCoverCost(params) || 0;
+            console.log('Örtü toplam maliyeti:', coverTotalCost);
+        }
+        
+        // Sulama sistemi toplam maliyeti (girdi bölümünden)
+        let irrigationTotalCost = 0;
+        if (irrigationType && params) {
+            irrigationTotalCost = calculateIrrigationTotalCost(irrigationType, params);
+            console.log('Sulama sistemi toplam maliyeti:', irrigationTotalCost);
+        }
+        
+        // Substrat toplam maliyeti (otomatik hesaplanan)
+        let substrateTotalCost = 0;
+        if (substrateType && potSize && params) {
+            const substrateData = calculateSubstrateCost(params, potSize, substrateType, 0);
+            substrateTotalCost = substrateData.calculatedTotal || 0;
+            console.log('Substrat toplam maliyeti:', substrateTotalCost);
+        }
+        
+        // Yatırım maliyetleri hesapla
+        console.log('Yatırım maliyetleri hesaplanıyor...');
+        const investmentCosts = calculateInvestmentCosts(params, potSize, substrateType, irrigationType, useCover, coverTotalCost, irrigationTotalCost, substrateTotalCost);
+        console.log('Yatırım maliyetleri:', investmentCosts);
+        
+        // Yıllık işletme maliyetleri hesapla
+        console.log('Yıllık işletme maliyetleri hesaplanıyor...');
+        const annualCosts = calculateAnnualOperatingCosts(params, workerCount, irrigationType, useCover, workerDailyHarvest, harvestDuration);
+        console.log('Yıllık işletme maliyetleri:', annualCosts);
+        
+        // Enflasyon oranı
+        const inflationRate = parseFloat(document.getElementById('inflation-rate')?.value) || 5;
+        console.log('Enflasyon oranı:', inflationRate);
+        
+        // 7 yıllık projeksiyon hesapla
+        console.log('7 yıllık projeksiyon hesaplanıyor...');
+        const projection7Years = calculate7YearProjection(params, annualCosts, investmentCosts, inflationRate);
+        console.log('7 yıllık projeksiyon:', projection7Years);
+        
+        const result = {
+            params,
+            investmentCosts,
+            annualCosts,
+            projection7Years,
+            workerDailyHarvest,
+            workerCount,
+            harvestDuration,
+            inflationRate
+        };
+        
+        console.log('Tüm veriler toplandı:', result);
+        return result;
+    } catch (error) {
+        console.error('collectAllInputsAndCalculate hatası:', error);
+        throw error;
+    }
+}
 
-    const totalYield = yield * area * years;
-    const totalRevenue = totalYield * price;
-
-    const netProfit = totalRevenue - totalInvestment;
-    const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100) : 0;
-    const unitCost = totalYield > 0 ? (totalInvestment / totalYield) : 0;
-    const annualProfit = netProfit / years;
-
-    // Sonuçları göster
-    displayResults({
-        totalInvestment,
-        totalRevenue,
-        netProfit,
-        profitMargin,
-        unitCost,
-        annualProfit
-    });
-
-    // Sonuçlar bölümünü göster
-    document.getElementById('results').style.display = 'block';
+// Sulama sistemi toplam maliyetini hesapla
+function calculateIrrigationTotalCost(irrigationType, params) {
+    if (!params || !irrigationType || !irrigationSystems[irrigationType]) return 0;
     
-    // Sonuçlara scroll yap
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Basit bir tahmin: Bitki başına ortalama kurulum maliyeti
+    // Gerçek hesaplama ekipman miktarlarına göre yapılabilir
+    // Şimdilik bitki başına 50 TL varsayalım (kullanıcı tabloda değiştirebilir)
+    return params.totalPlants * 50;
+}
+
+// Yatırım maliyetlerini hesapla
+function calculateInvestmentCosts(params, potSize, substrateType, irrigationType, useCover, coverTotalCost = 0, irrigationTotalCost = 0, substrateTotalCost = 0) {
+    const items = [];
+    let total = 0;
+    
+    // Fidan maliyeti - her zaman ekle (birim fiyat kullanıcı tabloda girecek)
+    const seedlingQuantity = params.totalPlants;
+    items.push({
+        name: '🌱 Fidan',
+        quantity: seedlingQuantity.toLocaleString('tr-TR'),
+        unit: 'adet',
+        unitPrice: 0, // Kullanıcı tabloda girecek veya otomatik hesaplanacak
+        total: 0,
+        description: `${seedlingQuantity.toLocaleString('tr-TR')} adet blueberry fidanı`,
+        calculatedTotal: 0 // Girdi bölümünden hesaplanan toplam maliyet yok
+    });
+    
+    // Saksı maliyeti - otomatik hesaplanır
+    if (potSize) {
+        const potUnitPrice = getPotPriceTL(potSize); // TL/adet (dolar cinsinden fiyat * dolar kuru)
+        const potQuantity = params.totalPlants;
+        const potTotal = potQuantity * potUnitPrice;
+        items.push({
+            name: '🪴 Saksı',
+            quantity: potQuantity.toLocaleString('tr-TR'),
+            unit: 'adet',
+            unitPrice: potUnitPrice,
+            total: potTotal,
+            description: `${potQuantity.toLocaleString('tr-TR')} adet ${potSize}L Serinova saksı`,
+            calculatedTotal: potTotal
+        });
+        total += potTotal;
+    }
+    
+    // Substrat maliyeti - her zaman ekle
+    if (substrateType && potSize) {
+        // Önce otomatik hesaplanan maliyeti al
+        const substrateData = calculateSubstrateCost(params, potSize, substrateType, 0);
+        // Girdi bölümünden hesaplanan toplam maliyet varsa onu kullan, yoksa otomatik hesaplananı kullan
+        let unitPrice = substrateData.unitPrice;
+        let totalCost = substrateData.calculatedTotal;
+        
+        if (substrateTotalCost > 0 && substrateData.quantity > 0) {
+            // Girdi bölümünden gelen toplam maliyet varsa onu kullan
+            unitPrice = substrateTotalCost / substrateData.quantity;
+            totalCost = substrateTotalCost;
+        }
+        
+        items.push({
+            name: '🌿 Substrat',
+            quantity: substrateData.quantity.toFixed(2),
+            unit: 'm³',
+            unitPrice: unitPrice,
+            total: totalCost,
+            description: substrateData.description,
+            calculatedTotal: totalCost // Otomatik hesaplanan veya girdi bölümünden gelen toplam maliyet
+        });
+        total += totalCost;
+    }
+    
+    // Sulama sistemi maliyeti - her zaman ekle
+    if (irrigationType && irrigationSystems[irrigationType]) {
+        const irrigationQuantity = params.totalPlants;
+        // Girdi bölümünden hesaplanan toplam maliyet varsa birim fiyatı otomatik hesapla
+        let unitPrice = 0;
+        let totalCost = 0;
+        if (irrigationTotalCost > 0 && irrigationQuantity > 0) {
+            unitPrice = irrigationTotalCost / irrigationQuantity;
+            totalCost = irrigationTotalCost;
+        }
+        items.push({
+            name: '💧 Sulama Sistemi',
+            quantity: irrigationQuantity.toLocaleString('tr-TR'),
+            unit: 'bitki',
+            unitPrice: unitPrice,
+            total: totalCost,
+            description: `${irrigationSystems[irrigationType].name} - Bitki başına kurulum maliyeti`,
+            calculatedTotal: irrigationTotalCost // Girdi bölümünden hesaplanan toplam maliyet
+        });
+        total += totalCost;
+    }
+    
+    // Örtü maliyeti - sadece kullanılıyorsa ekle
+    if (useCover) {
+        const areaPerPlant = (params.rowSpacing * params.plantSpacing) / 10000; // m²
+        const totalArea = params.totalPlants * areaPerPlant;
+        // Girdi bölümünden hesaplanan toplam maliyet varsa birim fiyatı otomatik hesapla
+        let unitPrice = 0;
+        let totalCost = 0;
+        if (coverTotalCost > 0 && totalArea > 0) {
+            unitPrice = coverTotalCost / totalArea;
+            totalCost = coverTotalCost;
+        }
+        items.push({
+            name: '🛡️ Örtü Sistemi',
+            quantity: totalArea.toFixed(2),
+            unit: 'm²',
+            unitPrice: unitPrice,
+            total: totalCost,
+            description: `${totalArea.toFixed(2)} m² örtü alanı`,
+            calculatedTotal: coverTotalCost // Girdi bölümünden hesaplanan toplam maliyet
+        });
+        total += totalCost;
+    }
+    
+    return {
+        items: items,
+        total: total
+    };
+}
+
+// Saksı fiyatını al (dolar cinsinden)
+function getPotPriceUSD(potSize) {
+    const pricesUSD = {
+        '20': 0.91,  // 20L saksı: 0.91 USD
+        '25': 0.91,  // 25L saksı: 0.91 USD
+        '30': 1.01,  // 30L saksı: 1.01 USD
+        '40': 1.36   // 40L saksı: 1.36 USD
+    };
+    return pricesUSD[potSize] || 0.91; // Varsayılan 0.91 USD
+}
+
+// Saksı fiyatını TL'ye çevir (varsayılan dolar kuru: 44)
+function getPotPriceTL(potSize) {
+    const dollarRate = 44; // Varsayılan dolar kuru
+    const priceUSD = getPotPriceUSD(potSize);
+    return priceUSD * dollarRate;
+}
+
+// Substrat bileşen fiyatları (TL/m³) - 2024 Türkiye piyasa fiyatları
+const substrateComponentPrices = {
+    'torf': 700,      // Beyaz Torf: 700 TL/m³
+    'kokopit': 500,   // Kokopit: 500 TL/m³
+    'perlit': 400,    // Perlit: 400 TL/m³
+    'pomza': 300      // Pomza: 300 TL/m³
+};
+
+// Substrat maliyetini hesapla
+function calculateSubstrateCost(params, potSize, substrateType, unitPrice) {
+    const potSizeL = parseFloat(potSize);
+    const substratePerPot = potSizeL * 0.9; // litre (saksı hacminin %90'ı)
+    const totalSubstrateL = params.totalPlants * substratePerPot;
+    const totalSubstrateM3 = totalSubstrateL / 1000; // m³
+    
+    // Substrat karışımı bileşenleri ve yüzdeleri
+    const substrateMixes = {
+        '100-torf': [
+            { name: 'Beyaz Torf', percentage: 100, price: substrateComponentPrices.torf }
+        ],
+        '50-50': [
+            { name: 'Beyaz Torf', percentage: 50, price: substrateComponentPrices.torf },
+            { name: 'Kokopit', percentage: 50, price: substrateComponentPrices.kokopit }
+        ],
+        '65-25-10': [
+            { name: 'Beyaz Torf', percentage: 65, price: substrateComponentPrices.torf },
+            { name: 'Kokopit', percentage: 25, price: substrateComponentPrices.kokopit },
+            { name: 'Perlit', percentage: 10, price: substrateComponentPrices.perlit }
+        ],
+        '50-40-10': [
+            { name: 'Beyaz Torf', percentage: 50, price: substrateComponentPrices.torf },
+            { name: 'Kokopit', percentage: 40, price: substrateComponentPrices.kokopit },
+            { name: 'Perlit', percentage: 10, price: substrateComponentPrices.perlit }
+        ],
+        '50-40-10-pomza': [
+            { name: 'Beyaz Torf', percentage: 50, price: substrateComponentPrices.torf },
+            { name: 'Kokopit', percentage: 40, price: substrateComponentPrices.kokopit },
+            { name: 'Pomza', percentage: 10, price: substrateComponentPrices.pomza }
+        ]
+    };
+    
+    const substrateNames = {
+        '100-torf': '%100 Beyaz Torf',
+        '50-50': '%50 Beyaz Torf + %50 Kokopit',
+        '65-25-10': '%65 Beyaz Torf + %25 Kokopit + %10 Perlit',
+        '50-40-10': '%50 Beyaz Torf + %40 Kokopit + %10 Perlit',
+        '50-40-10-pomza': '%50 Beyaz Torf + %40 Kokopit + %10 Pomza'
+    };
+    
+    // Eğer kullanıcı birim fiyat girmişse onu kullan, yoksa otomatik hesapla
+    let calculatedUnitPrice = 0;
+    let calculatedTotal = 0;
+    
+    if (unitPrice === 0 && substrateMixes[substrateType]) {
+        // Karışıma göre ortalama birim fiyatı hesapla
+        const mix = substrateMixes[substrateType];
+        mix.forEach(component => {
+            calculatedUnitPrice += (component.percentage / 100) * component.price;
+        });
+        calculatedTotal = totalSubstrateM3 * calculatedUnitPrice;
+    } else if (unitPrice > 0) {
+        // Kullanıcı birim fiyat girmiş
+        calculatedUnitPrice = unitPrice;
+        calculatedTotal = totalSubstrateM3 * unitPrice;
+    }
+    
+    return {
+        quantity: totalSubstrateM3,
+        unitPrice: calculatedUnitPrice,
+        total: calculatedTotal,
+        description: `${substrateNames[substrateType] || 'Substrat karışımı'}`,
+        calculatedTotal: calculatedTotal
+    };
+}
+
+// Örtü maliyetini hesapla (değer döndüren versiyon)
+function calculateCoverCostValue(params) {
+    if (!params || params.totalPlants <= 0) return 0;
+    
+    // Örtü maliyeti hesaplaması (basitleştirilmiş)
+    const areaPerPlant = (params.rowSpacing * params.plantSpacing) / 10000; // m²
+    const totalArea = params.totalPlants * areaPerPlant;
+    
+    // Örtü malzemesi maliyeti (m² başına yaklaşık 15 TL)
+    return totalArea * 15;
+}
+
+// Yıllık işletme maliyetlerini hesapla
+function calculateAnnualOperatingCosts(params, workerCount, irrigationType, useCover, workerDailyHarvest = 0, harvestDuration = 45) {
+    const items = [];
+    let total = 0;
+    
+    // Yıllık su ihtiyacı (m³) - bitki başına yaklaşık 2 m³/yıl
+    const annualWaterM3 = params.totalPlants * 2;
+    const dailyWaterM3 = annualWaterM3 / 365;
+    // Sulama suyu fiyatı: Ortalama 100 TL/m³ (2024 Türkiye piyasa fiyatı - bölgeye göre 85-320 TL/m³ arası)
+    const waterPricePerM3 = 100; // TL/m³
+    const dailyWaterPrice = waterPricePerM3; // TL/m³/gün (m³ başına günlük fiyat)
+    const annualWaterCost = dailyWaterPrice * dailyWaterM3 * 365;
+    
+    items.push({
+        name: '💧 Sulama Suyu',
+        quantity: dailyWaterM3.toFixed(3),
+        unit: 'm³/gün',
+        dailyPrice: dailyWaterPrice,
+        annualTotal: annualWaterCost,
+        description: `Günlük ${dailyWaterM3.toFixed(3)} m³ su ihtiyacı (${annualWaterM3.toFixed(2)} m³/yıl) - ${waterPricePerM3} TL/m³`
+    });
+    
+    // Gübre maliyeti
+    const fertilizerKg = params.totalPlants * 0.15; // Bitki başına 150g = 0.15kg
+    const dailyFertilizerKg = fertilizerKg / 365;
+    // Blueberry özel gübre fiyatı: Ortalama 28 TL/kg (2024 Türkiye piyasa fiyatı)
+    const fertilizerPricePerKg = 28; // TL/kg
+    const dailyFertilizerPrice = fertilizerPricePerKg; // TL/kg/gün (kg başına günlük fiyat)
+    const annualFertilizerCost = dailyFertilizerPrice * dailyFertilizerKg * 365;
+    
+    items.push({
+        name: '🌱 Gübre',
+        quantity: dailyFertilizerKg.toFixed(4),
+        unit: 'kg/gün',
+        dailyPrice: dailyFertilizerPrice,
+        annualTotal: annualFertilizerCost,
+        description: `Günlük ${dailyFertilizerKg.toFixed(4)} kg gübre ihtiyacı (${fertilizerKg.toFixed(2)} kg/yıl) - ${fertilizerPricePerKg} TL/kg`
+    });
+    
+    // Hasat işçiliği (sadece hasat döneminde)
+    const harvestWorkers = workerDailyHarvest > 0 && harvestDuration > 0 
+        ? Math.ceil((params.totalPlants * 2.5) / (workerDailyHarvest * harvestDuration)) // Ortalama 2.5 kg/bitki hasat
+        : 0;
+    // Hasat işçiliği günlük ücreti: Tarla büyüklüğüne göre
+    // Küçük tarlalar (<1000 bitki): 1.200 TL/gün, Orta (1000-5000): 1.000 TL/gün, Büyük (>5000): 900 TL/gün
+    let dailyHarvestPrice = 0;
+    if (params.totalPlants < 1000) {
+        dailyHarvestPrice = 1200; // Küçük tarla
+    } else if (params.totalPlants < 5000) {
+        dailyHarvestPrice = 1000; // Orta tarla
+    } else {
+        dailyHarvestPrice = 900; // Büyük tarla (toplu işçilik indirimi)
+    }
+    // Hasat sadece hasat döneminde yapılıyor, yıl boyunca değil
+    const annualHarvestCost = dailyHarvestPrice * harvestWorkers * harvestDuration;
+    
+    items.push({
+        name: '👷 Hasat İşçiliği',
+        quantity: harvestWorkers,
+        unit: 'kişi',
+        dailyPrice: dailyHarvestPrice,
+        annualTotal: annualHarvestCost,
+        description: `${harvestWorkers} kişi × ${harvestDuration} gün hasat süresi (sadece hasat döneminde) - ${dailyHarvestPrice} TL/kişi/gün`
+    });
+    
+    // Bakım işçiliği
+    const maintenanceWorkers = workerCount || 0;
+    // Bakım işçiliği: Aylık 25.000 TL/kişi = Günlük 25.000 / 30 = 833.33 TL/gün
+    const monthlyMaintenancePrice = 25000; // TL/kişi/ay
+    const dailyMaintenancePrice = monthlyMaintenancePrice / 30; // TL/kişi/gün (833.33 TL/gün)
+    const annualMaintenanceCost = dailyMaintenancePrice * maintenanceWorkers * 365;
+    
+    items.push({
+        name: '🔧 Bakım İşçiliği',
+        quantity: maintenanceWorkers,
+        unit: 'kişi',
+        dailyPrice: dailyMaintenancePrice,
+        annualTotal: annualMaintenanceCost,
+        description: `${maintenanceWorkers} kişi bakım personeli - ${monthlyMaintenancePrice.toLocaleString('tr-TR')} TL/kişi/ay (${dailyMaintenancePrice.toFixed(2)} TL/kişi/gün)`
+    });
+    
+    // Önce diğer kalemlerin toplamını hesapla (diğer giderler hariç)
+    let subtotal = 0;
+    items.forEach(item => {
+        subtotal += item.annualTotal;
+    });
+    
+    // Diğer giderler: Toplam yıllık işletme maliyetinin %10'u
+    const otherCostPercentage = 0.10; // %10
+    // Diğer giderler = (subtotal / (1 - 0.10)) * 0.10 = subtotal * 0.10 / 0.90
+    // Çünkü: total = subtotal + otherCost ve otherCost = total * 0.10
+    // total = subtotal + (total * 0.10)
+    // total * 0.90 = subtotal
+    // total = subtotal / 0.90
+    // otherCost = total * 0.10 = (subtotal / 0.90) * 0.10 = subtotal * 0.10 / 0.90
+    const annualOtherCost = subtotal * otherCostPercentage / (1 - otherCostPercentage);
+    const dailyOtherExpenses = annualOtherCost / 365;
+    
+    items.push({
+        name: '📋 Diğer Giderler',
+        quantity: 1,
+        unit: 'günlük',
+        dailyPrice: dailyOtherExpenses,
+        annualTotal: annualOtherCost,
+        description: `Diğer işletme giderleri (elektrik, yakıt, vb.) - Toplam işletme maliyetinin %${(otherCostPercentage * 100).toFixed(0)}'i`
+    });
+    
+    // Toplam hesapla (tüm kalemler dahil)
+    items.forEach(item => {
+        total += item.annualTotal;
+    });
+    
+    return {
+        items: items,
+        total: total
+    };
+}
+
+// 7 yıllık projeksiyon hesapla
+function calculate7YearProjection(params, annualCosts, investmentCosts, inflationRate = 5) {
+    const projection = [];
+    
+    // Yıllık hasat miktarları (bitki başına kg)
+    const yieldsPerYear = [0.2, 0.5, 1.0, 1.5, 2.0, 2.3, 2.5];
+    
+    // Satış fiyatı (kg başına TL) - varsayılan 100 TL/kg
+    const pricePerKg = 100;
+    
+    // Güvenli değer kontrolü
+    const investmentTotal = (investmentCosts && typeof investmentCosts.total === 'number' && isFinite(investmentCosts.total)) 
+        ? investmentCosts.total 
+        : 0;
+    const annualTotal = (annualCosts && typeof annualCosts.total === 'number' && isFinite(annualCosts.total)) 
+        ? annualCosts.total 
+        : 0;
+    
+    // Enflasyon oranını yüzde olarak ondalığa çevir (örn: 5 -> 0.05)
+    const inflationMultiplier = 1 + (inflationRate / 100);
+    
+    let cumulativeInvestment = investmentTotal;
+    let cumulativeRevenue = 0;
+    let cumulativeCosts = investmentTotal;
+    let previousYearOperatingCost = annualTotal; // Bir önceki yılın işletme maliyeti
+    
+    for (let year = 1; year <= 7; year++) {
+        const yieldPerPlant = yieldsPerYear[year - 1] || 0;
+        const totalPlants = params.totalPlants || 0;
+        const totalHarvest = totalPlants * yieldPerPlant;
+        const revenue = totalHarvest * pricePerKg;
+        
+        // İşletme maliyeti hesaplama
+        let operatingCost;
+        if (year === 1) {
+            // 1. yıl: Yıllık işletme maliyeti + Yatırım maliyeti
+            operatingCost = annualTotal + investmentTotal;
+            previousYearOperatingCost = annualTotal; // Sonraki yıl için temel maliyet
+        } else {
+            // 2. yıldan itibaren: Bir önceki yılın işletme maliyetine enflasyon ekle
+            previousYearOperatingCost = previousYearOperatingCost * inflationMultiplier;
+            operatingCost = previousYearOperatingCost;
+        }
+        
+        const netProfit = revenue - operatingCost;
+        
+        cumulativeInvestment = investmentTotal; // Sadece ilk yıl
+        cumulativeRevenue += revenue;
+        cumulativeCosts += operatingCost;
+        const cumulativeProfit = cumulativeRevenue - cumulativeCosts;
+        
+        projection.push({
+            year,
+            yieldPerPlant,
+            totalHarvest,
+            revenue,
+            operatingCost,
+            netProfit,
+            cumulativeInvestment,
+            cumulativeRevenue,
+            cumulativeCosts,
+            cumulativeProfit
+        });
+    }
+    
+    return projection;
+}
+
+// Analiz sonuçlarını göster
+function displayAnalysisResults(data) {
+    displayInvestmentCosts(data.investmentCosts);
+    displayAnnualOperatingCosts(data.annualCosts);
+    display7YearProjection(data.projection7Years);
+}
+
+// Yatırım maliyetlerini göster
+function displayInvestmentCosts(costs) {
+    const contentDiv = document.getElementById('investment-costs-content');
+    if (!contentDiv) return;
+    
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('tr-TR', {
+            style: 'currency',
+            currency: 'TRY',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    };
+    
+    let tableHtml = `
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #1a73e8 0%, #1976d2 100%); color: white;">
+                        <th style="padding: 16px; text-align: left; font-weight: 600; border-bottom: 2px solid #1565c0;">Kalem</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 600; border-bottom: 2px solid #1565c0;">Miktar / Açıklama</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600; border-bottom: 2px solid #1565c0;">Birim Fiyat</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600; border-bottom: 2px solid #1565c0;">Toplam Maliyet</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    costs.items.forEach((item, index) => {
+        const rowColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        tableHtml += `
+            <tr style="background-color: ${rowColor};">
+                <td style="padding: 14px; font-weight: 500; color: #202124; border-bottom: 1px solid #e8eaed;">${item.name}</td>
+                <td style="padding: 14px; color: #5f6368; border-bottom: 1px solid #e8eaed;">
+                    <div style="font-weight: 500; margin-bottom: 4px;">${item.quantity} ${item.unit}</div>
+                    <div style="font-size: 12px; color: #9aa0a6;">${item.description}</div>
+                </td>
+                <td style="padding: 14px; text-align: right; color: #5f6368; border-bottom: 1px solid #e8eaed;">${formatCurrency(item.unitPrice)}</td>
+                <td style="padding: 14px; text-align: right; color: #1a73e8; font-weight: 600; border-bottom: 1px solid #e8eaed;">${formatCurrency(item.total)}</td>
+            </tr>
+        `;
+    });
+    
+    tableHtml += `
+                </tbody>
+                <tfoot>
+                    <tr style="background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);">
+                        <td colspan="3" style="padding: 20px; text-align: right; font-weight: 700; font-size: 18px; color: #202124; border-top: 2px solid #dadce0;">
+                            💰 Toplam Yatırım Maliyeti:
+                        </td>
+                        <td style="padding: 20px; text-align: right; font-weight: 700; font-size: 24px; color: #1a73e8; border-top: 2px solid #dadce0;">
+                            ${formatCurrency(costs.total)}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    
+    contentDiv.innerHTML = tableHtml;
+}
+
+// Yıllık işletme maliyetlerini göster
+function displayAnnualOperatingCosts(costs) {
+    const contentDiv = document.getElementById('annual-operating-costs-content');
+    if (!contentDiv) return;
+    
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('tr-TR', {
+            style: 'currency',
+            currency: 'TRY',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    };
+    
+    contentDiv.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div style="padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #1a73e8;">
+                <div style="font-size: 13px; color: #5f6368; margin-bottom: 6px;">👥 İşçilik</div>
+                <div style="font-size: 20px; font-weight: 600; color: #202124;">${formatCurrency(costs.labor)}</div>
+            </div>
+            <div style="padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #4caf50;">
+                <div style="font-size: 13px; color: #5f6368; margin-bottom: 6px;">🌱 Gübre</div>
+                <div style="font-size: 20px; font-weight: 600; color: #202124;">${formatCurrency(costs.fertilizer)}</div>
+            </div>
+            <div style="padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #2196f3;">
+                <div style="font-size: 13px; color: #5f6368; margin-bottom: 6px;">💧 Su</div>
+                <div style="font-size: 20px; font-weight: 600; color: #202124;">${formatCurrency(costs.water)}</div>
+            </div>
+            <div style="padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #ff9800;">
+                <div style="font-size: 13px; color: #5f6368; margin-bottom: 6px;">🔧 Bakım</div>
+                <div style="font-size: 20px; font-weight: 600; color: #202124;">${formatCurrency(costs.maintenance)}</div>
+            </div>
+            <div style="padding: 16px; background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #9c27b0;">
+                <div style="font-size: 13px; color: #5f6368; margin-bottom: 6px;">📋 Diğer</div>
+                <div style="font-size: 20px; font-weight: 600; color: #202124;">${formatCurrency(costs.other)}</div>
+            </div>
+        </div>
+        <div style="padding: 24px; background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 8px; border: 2px solid #1a73e8;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 16px; color: #5f6368; margin-bottom: 8px;">💼 Toplam Yıllık İşletme Maliyeti</div>
+                    <div style="font-size: 32px; font-weight: 700; color: #1a73e8;">${formatCurrency(costs.total)}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 7 yıllık projeksiyonu göster
+function display7YearProjection(projection) {
+    const contentDiv = document.getElementById('7year-projection-content');
+    if (!contentDiv) return;
+    
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('tr-TR', {
+            style: 'currency',
+            currency: 'TRY',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    };
+    
+    let tableHtml = `
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #1a73e8 0%, #1976d2 100%); color: white;">
+                        <th style="padding: 16px; text-align: left; font-weight: 600;">Yıl</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600;">Bitki Başı Verim (kg)</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600;">Toplam Hasat (kg)</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600;">Gelir (₺)</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600;">İşletme Maliyeti (₺)</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600;">Net Kar (₺)</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 600;">Birikimli Kar (₺)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    projection.forEach((year, index) => {
+        const rowColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        const netProfitColor = year.netProfit >= 0 ? '#2e7d32' : '#c62828';
+        const cumulativeColor = year.cumulativeProfit >= 0 ? '#2e7d32' : '#c62828';
+        
+        tableHtml += `
+            <tr style="background-color: ${rowColor};">
+                <td style="padding: 14px; font-weight: 600; color: #202124;">${year.year}</td>
+                <td style="padding: 14px; text-align: right; color: #5f6368;">${year.yieldPerPlant.toFixed(2)}</td>
+                <td style="padding: 14px; text-align: right; color: #5f6368;">${year.totalHarvest.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</td>
+                <td style="padding: 14px; text-align: right; color: #1a73e8; font-weight: 600;">${formatCurrency(year.revenue)}</td>
+                <td style="padding: 14px; text-align: right; color: #5f6368;">${formatCurrency(year.operatingCost)}</td>
+                <td style="padding: 14px; text-align: right; color: ${netProfitColor}; font-weight: 600;">${formatCurrency(year.netProfit)}</td>
+                <td style="padding: 14px; text-align: right; color: ${cumulativeColor}; font-weight: 700;">${formatCurrency(year.cumulativeProfit)}</td>
+            </tr>
+        `;
+    });
+    
+    tableHtml += `
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 24px; padding: 20px; background-color: #e8f0fe; border-radius: 8px; border-left: 4px solid #1a73e8;">
+            <div style="font-size: 14px; color: #5f6368; line-height: 1.8;">
+                <strong style="color: #202124;">📊 Projeksiyon Özeti:</strong><br>
+                • Toplam 7 yıllık gelir: <strong style="color: #1a73e8;">${formatCurrency(projection[projection.length - 1].cumulativeRevenue)}</strong><br>
+                • Toplam 7 yıllık maliyet: <strong style="color: #ea4335;">${formatCurrency(projection[projection.length - 1].cumulativeCosts)}</strong><br>
+                • 7. yıl sonunda birikimli kar: <strong style="color: ${projection[projection.length - 1].cumulativeProfit >= 0 ? '#2e7d32' : '#c62828'}; font-size: 18px;">${formatCurrency(projection[projection.length - 1].cumulativeProfit)}</strong>
+            </div>
+        </div>
+    `;
+    
+    contentDiv.innerHTML = tableHtml;
 }
 
 function displayResults(results) {
@@ -859,13 +1840,29 @@ function displayResults(results) {
     annualProfitEl.closest('.sites-result-card').className = 'sites-result-card ' + (results.annualProfit >= 0 ? 'positive' : 'negative');
 }
 
-// İklim verilerini doldur
-function fillClimateData(cityData) {
-    document.getElementById('avg-temperature').value = cityData.temperature;
-    document.getElementById('annual-rainfall').value = cityData.rainfall;
-    document.getElementById('humidity').value = cityData.humidity;
-    document.getElementById('harvest-period').value = cityData.harvestPeriod;
-    document.getElementById('harvest-duration').value = cityData.harvestDuration;
+// İklim verilerini doldur (sadece boş alanları doldur)
+function fillClimateData(cityData, onlyIfEmpty = false) {
+    const tempInput = document.getElementById('avg-temperature');
+    const rainfallInput = document.getElementById('annual-rainfall');
+    const humidityInput = document.getElementById('humidity');
+    const periodInput = document.getElementById('harvest-period');
+    const durationInput = document.getElementById('harvest-duration');
+    
+    if (tempInput && (!onlyIfEmpty || !tempInput.value)) {
+        tempInput.value = cityData.temperature;
+    }
+    if (rainfallInput && (!onlyIfEmpty || !rainfallInput.value)) {
+        rainfallInput.value = cityData.rainfall;
+    }
+    if (humidityInput && (!onlyIfEmpty || !humidityInput.value)) {
+        humidityInput.value = cityData.humidity;
+    }
+    if (periodInput && (!onlyIfEmpty || !periodInput.value)) {
+        periodInput.value = cityData.harvestPeriod;
+    }
+    if (durationInput && (!onlyIfEmpty || !durationInput.value)) {
+        durationInput.value = cityData.harvestDuration;
+    }
 }
 
 // İklim verilerini temizle
@@ -1151,7 +2148,7 @@ function showIrrigationEquipment(system) {
     
     equipmentList.innerHTML = html;
     equipmentDiv.style.display = 'block';
-    equipmentDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Otomatik scroll kaldırıldı - kullanıcı deneyimini bozuyor
 }
 
 // Yıllık su ihtiyacını hesapla
@@ -1414,7 +2411,281 @@ function updateHarvestEstimates() {
     
     tableBody.innerHTML = tableHtml;
     harvestDiv.style.display = 'block';
-    harvestDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Otomatik scroll kaldırıldı - kullanıcı deneyimini bozuyor
+    
+    // Gübreleme ihtiyacını da güncelle
+    updateFertilizerNeed();
+}
+
+// Tahmini yıllık gübreleme ihtiyacını hesapla ve göster
+function updateFertilizerNeed() {
+    const fertilizerDiv = document.getElementById('fertilizer-need');
+    const fertilizerPerPlantSpan = document.getElementById('fertilizer-per-plant');
+    const totalFertilizerSpan = document.getElementById('total-fertilizer-need');
+    const recommendationsDiv = document.getElementById('fertilizer-recommendations');
+    
+    if (!fertilizerDiv) return;
+    
+    // Proje parametrelerini al
+    const params = calculateProjectParams();
+    if (!params || params.totalPlants <= 0) {
+        fertilizerDiv.style.display = 'none';
+        return;
+    }
+    
+    // Saksı boyutunu al
+    const potSizeSelect = document.getElementById('pot-size');
+    const potSize = potSizeSelect ? potSizeSelect.value : null;
+    
+    // Saksı boyutuna göre bitki başına yıllık gübre miktarını belirle (gram cinsinden)
+    // Blueberry için saksıda yetiştiricilikte genel öneriler:
+    // - 20L: 100-120g/bitki/yıl
+    // - 25L: 120-150g/bitki/yıl
+    // - 30L: 150-180g/bitki/yıl
+    // - 40L: 180-220g/bitki/yıl
+    let fertilizerPerPlantGrams = 150; // Varsayılan ortalama değer (saksı boyutu seçilmediyse)
+    
+    if (potSize === '20') {
+        fertilizerPerPlantGrams = 110;
+    } else if (potSize === '25') {
+        fertilizerPerPlantGrams = 135;
+    } else if (potSize === '30') {
+        fertilizerPerPlantGrams = 165;
+    } else if (potSize === '40') {
+        fertilizerPerPlantGrams = 200;
+    }
+    
+    // Toplam gübre ihtiyacını hesapla (kg cinsinden)
+    const totalFertilizerKg = (fertilizerPerPlantGrams * params.totalPlants) / 1000;
+    
+    // Değerleri göster
+    if (fertilizerPerPlantSpan) {
+        if (potSize) {
+            fertilizerPerPlantSpan.textContent = `${fertilizerPerPlantGrams} g/bitki/yıl`;
+        } else {
+            fertilizerPerPlantSpan.textContent = `${fertilizerPerPlantGrams} g/bitki/yıl (ortalama)`;
+        }
+    }
+    
+    if (totalFertilizerSpan) {
+        totalFertilizerSpan.textContent = `${totalFertilizerKg.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg/yıl`;
+    }
+    
+    // Gübreleme önerilerini göster
+    if (recommendationsDiv) {
+        const potSizeText = potSize ? `${potSize} Litre` : 'Seçilen';
+        recommendationsDiv.innerHTML = `
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #202124;">📋 Önerilen Gübre Tipi:</strong><br>
+                <span style="color: #5f6368;">NPK 10-10-10 veya özel blueberry gübreleri (asidik toprak için uygun)</span>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #202124;">📅 Gübreleme Programı:</strong><br>
+                <span style="color: #5f6368;">Yılda 3-4 kez, küçük miktarlarda:</span>
+                <ul style="margin: 8px 0; padding-left: 20px; color: #5f6368;">
+                    <li>İlkbahar başlangıcı (Mart-Nisan): Toplamın %30'u</li>
+                    <li>Çiçeklenme öncesi (Mayıs): Toplamın %25'i</li>
+                    <li>Meyve gelişimi (Haziran-Temmuz): Toplamın %30'u</li>
+                    <li>Hasat sonrası (Ağustos-Eylül): Toplamın %15'i</li>
+                </ul>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #202124;">🌿 Organik Gübre Alternatifleri:</strong><br>
+                <span style="color: #5f6368;">Kompost, iyi yanmış gübre, organik gübreler (pH düşürücü özellikli) kullanılabilir</span>
+            </div>
+            <div>
+                <strong style="color: #202124;">💧 Gübreleme Yöntemi:</strong><br>
+                <span style="color: #5f6368;">Gübreyi toprak yüzeyine serperek veya sulama suyuna karıştırarak uygulayın. Gübreleme sonrası mutlaka sulama yapın.</span>
+            </div>
+        `;
+    }
+    
+    fertilizerDiv.style.display = 'block';
+    // Otomatik scroll kaldırıldı - kullanıcı deneyimini bozuyor
+}
+
+// İşletme boyutuna göre önerilen personel sayısını hesapla ve göster
+function updateRecommendedStaff() {
+    const recommendedDiv = document.getElementById('recommended-staff-info');
+    const recommendedContent = document.getElementById('recommended-staff-content');
+    
+    if (!recommendedDiv || !recommendedContent) return;
+    
+    // Proje parametrelerini al
+    const params = calculateProjectParams();
+    if (!params || params.totalPlants <= 0) {
+        recommendedDiv.style.display = 'none';
+        return;
+    }
+    
+    const projectArea = params.projectArea;
+    const totalPlants = params.totalPlants;
+    
+    // İşletme boyutuna göre önerilen personel sayısı
+    // Küçük işletme: < 1000 m² veya < 500 bitki
+    // Orta işletme: 1000-5000 m² veya 500-2500 bitki
+    // Büyük işletme: > 5000 m² veya > 2500 bitki
+    
+    let recommendedStaff = 1; // Minimum 1 kişi
+    let businessSize = '';
+    let recommendations = [];
+    
+    if (projectArea < 1000 || totalPlants < 500) {
+        // Küçük işletme
+        businessSize = 'Küçük İşletme';
+        recommendedStaff = 1;
+        recommendations = [
+            '1 kişi yeterli olabilir (part-time veya tam zamanlı)',
+            'Günlük bakım işleri: sulama, gübreleme, budama',
+            'Hasat döneminde ek işçi gerekebilir',
+            'Haftalık çalışma süresi: 20-30 saat'
+        ];
+    } else if (projectArea < 5000 || totalPlants < 2500) {
+        // Orta işletme
+        businessSize = 'Orta İşletme';
+        recommendedStaff = 2;
+        recommendations = [
+            '2 kişi önerilir (1 tam zamanlı + 1 part-time)',
+            'Günlük bakım işleri için düzenli personel',
+            'Hasat döneminde 3-5 ek işçi gerekebilir',
+            'Haftalık çalışma süresi: 40-60 saat (toplam)',
+            'İş bölümü: 1 kişi sulama/gübreleme, 1 kişi budama/bakım'
+        ];
+    } else {
+        // Büyük işletme
+        businessSize = 'Büyük İşletme';
+        recommendedStaff = Math.ceil(totalPlants / 1000); // Her 1000 bitki için 1 kişi
+        if (recommendedStaff < 3) recommendedStaff = 3; // Minimum 3 kişi
+        recommendations = [
+            `${recommendedStaff} kişi önerilir (tam zamanlı personel)`,
+            'Günlük bakım işleri için ekip çalışması gerekir',
+            'Hasat döneminde 10-20 ek işçi gerekebilir',
+            'Haftalık çalışma süresi: 120+ saat (toplam)',
+            'İş bölümü: Sulama ekibi, bakım ekibi, hasat ekibi',
+            'Yönetici/supervizör pozisyonu gerekebilir'
+        ];
+    }
+    
+    // İçeriği göster
+    let html = `
+        <div style="margin-bottom: 12px;">
+            <strong style="color: #202124;">İşletme Kategorisi:</strong> 
+            <span style="color: #1a73e8; font-weight: 600;">${businessSize}</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="color: #202124;">Önerilen Bakım Personeli Sayısı:</strong> 
+            <span style="color: #2e7d32; font-weight: 700; font-size: 18px;">${recommendedStaff} kişi</span>
+        </div>
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #dadce0;">
+            <strong style="color: #202124; display: block; margin-bottom: 8px;">Öneriler:</strong>
+            <ul style="margin: 0; padding-left: 20px; color: #5f6368;">
+    `;
+    
+    recommendations.forEach(rec => {
+        html += `<li style="margin-bottom: 6px;">${rec}</li>`;
+    });
+    
+    html += `
+            </ul>
+        </div>
+    `;
+    
+    recommendedContent.innerHTML = html;
+    recommendedDiv.style.display = 'block';
+}
+
+// İşçi ve hasat hesaplamalarını güncelle
+function updateWorkerHarvestCalculations() {
+    const calculationsDiv = document.getElementById('harvest-calculations');
+    const dailyCapacitySpan = document.getElementById('daily-harvest-capacity');
+    const harvestDurationSpan = document.getElementById('harvest-duration-days');
+    const requiredWorkersSpan = document.getElementById('required-harvest-workers');
+    const staffRecommendationsDiv = document.getElementById('staff-recommendations');
+    
+    if (!calculationsDiv) return;
+    
+    // Proje parametrelerini al
+    const params = calculateProjectParams();
+    if (!params || params.totalPlants <= 0) {
+        calculationsDiv.style.display = 'none';
+        return;
+    }
+    
+    // İşçi parametrelerini al
+    const workerDailyHarvest = parseFloat(document.getElementById('worker-daily-harvest').value) || 0;
+    const workerCount = parseInt(document.getElementById('worker-count').value) || 0;
+    
+    if (workerDailyHarvest <= 0) {
+        calculationsDiv.style.display = 'none';
+        return;
+    }
+    
+    // Hasat süresini al (gün cinsinden)
+    const harvestDurationInput = document.getElementById('harvest-duration');
+    const harvestDuration = parseFloat(harvestDurationInput ? harvestDurationInput.value : 0) || 45; // Varsayılan 45 gün
+    
+    // Yıllık toplam hasat miktarını hesapla (7. yıl için maksimum verim)
+    // Blueberry için saksıda yetiştiricilikte 7. yılda bitki başına yaklaşık 2-3 kg verim beklenir
+    const yieldPerPlantYear7 = 2.5; // kg (ortalama)
+    const totalAnnualHarvest = params.totalPlants * yieldPerPlantYear7; // kg
+    
+    // Günlük toplam hasat kapasitesi
+    const dailyHarvestCapacity = workerDailyHarvest; // kg/gün (bir işçi için)
+    
+    // Gerekli hasat işçisi sayısı (hasat süresi içinde toplam hasadı tamamlamak için)
+    const requiredHarvestWorkers = Math.ceil(totalAnnualHarvest / (dailyHarvestCapacity * harvestDuration));
+    
+    // Günlük toplam hasat kapasitesi (tüm işçilerle)
+    const totalDailyCapacity = dailyHarvestCapacity * requiredHarvestWorkers;
+    
+    // Değerleri göster
+    if (dailyCapacitySpan) {
+        dailyCapacitySpan.textContent = `${totalDailyCapacity.toFixed(1)} kg/gün`;
+    }
+    
+    if (harvestDurationSpan) {
+        harvestDurationSpan.textContent = `${harvestDuration} gün`;
+    }
+    
+    if (requiredWorkersSpan) {
+        requiredWorkersSpan.textContent = `${requiredHarvestWorkers} kişi`;
+    }
+    
+    // Personel önerilerini göster
+    if (staffRecommendationsDiv) {
+        const totalStaff = workerCount + requiredHarvestWorkers;
+        let recommendationsHtml = `
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #202124;">Toplam Personel İhtiyacı:</strong> 
+                <span style="color: #1a73e8; font-weight: 600; font-size: 16px;">${totalStaff} kişi</span>
+                <ul style="margin: 8px 0; padding-left: 20px; color: #5f6368;">
+                    <li>Bakım personeli: ${workerCount} kişi</li>
+                    <li>Hasat personeli: ${requiredHarvestWorkers} kişi</li>
+                </ul>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #202124;">Hasat Dönemi Önerileri:</strong>
+                <ul style="margin: 8px 0; padding-left: 20px; color: #5f6368;">
+                    <li>Hasat döneminde ${requiredHarvestWorkers} işçi ile günde ${totalDailyCapacity.toFixed(1)} kg hasat yapılabilir</li>
+                    <li>Toplam ${totalAnnualHarvest.toFixed(0)} kg hasat ${harvestDuration} günde tamamlanabilir</li>
+                    <li>Hasat dönemi dışında sadece bakım personeli yeterlidir</li>
+                    <li>Mevsimlik işçi kiralama düşünülebilir</li>
+                </ul>
+            </div>
+        `;
+        
+        if (workerCount === 0) {
+            recommendationsHtml += `
+                <div style="background-color: #fff3e0; padding: 12px; border-radius: 4px; margin-top: 12px; border-left: 3px solid #ff9800;">
+                    <strong style="color: #f57c00;">⚠️ Uyarı:</strong> Bakım personeli sayısı girilmedi. Lütfen işletme bakımı için gerekli personel sayısını girin.
+                </div>
+            `;
+        }
+        
+        staffRecommendationsDiv.innerHTML = recommendationsHtml;
+    }
+    
+    calculationsDiv.style.display = 'block';
 }
 
 // Toplam saksı ve fidan adedini güncelle (maliyet hesaplaması yok)
@@ -1614,7 +2885,7 @@ function showCoverImpact(useCover) {
     }
     
     coverImpactDiv.style.display = 'block';
-    coverImpactDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Otomatik scroll kaldırıldı - kullanıcı deneyimini bozuyor
     
     // Proje parametreleri değiştiğinde örtü maliyetini güncelle
     if (useCover) {
@@ -1653,7 +2924,7 @@ function showVarietyParams(variety) {
     document.getElementById('variety-warning').textContent = variety.warning;
     
     document.getElementById('variety-params').style.display = 'block';
-    document.getElementById('variety-params').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Otomatik scroll kaldırıldı - kullanıcı deneyimini bozuyor
 }
 
 // Kaynak bilgilerini göster
